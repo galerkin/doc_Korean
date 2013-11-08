@@ -4,7 +4,7 @@ layout: post
 title:  Fast Numeric Computation in Julia
 author: <a href="http://dahua.me">Dahua Lin</a>
 ---
-translator: [Jaesung Eom](https://twitter.com/JaesungEom)
+translator: [Jaesung Eom](https://twitter.com/JaesungEom), Nov 8th, 2013
 
 매일 수치 해석 문제를 다루며, 항상 큰 데이터를 다루는  엄청나게 빠른 실행 코드를 작성할 수 있도록하면서 우아한 인터페이스를 제공하는 언어를 꿈꿔왔다. 줄리아는 꿈을 현실로 이뤄주는 언어다.
 줄리아와 함께, 여러분 문제에 보다 초점을 맞출 수 있으면서도 코드를 깨끗하게 유지하고, 더 중요한 것은, 성능이 중요한 경우에도 C 나 포트란과 같은 저수준의 언어로 다이빙하지 않고도 빠르게 작동하는  코드를 작성할수있다.
@@ -147,9 +147,9 @@ translator: [Jaesung Eom](https://twitter.com/JaesungEom)
 
 ## 루프내에서 배열을 만들지 마라(Avoid creating arrays in loops)
 
-배열을 만드는 것은 메모리 할당을 요구하고 가비지 컬렉터의 부하를 줍니다. 같은 배열을 재사용하면 메모리 관리 비용을 줄인다.
+배열을 만드는 것은 메모리 할당을 요구하고 가비지 컬렉터의 부하를 준다. 같은 배열을 재사용하면 메모리 관리 비용을 줄인다.
 
-축차 알고리즘에서 배열을 업데이트하는 일은 드물지 않다. 예를 들어 K-mean알고리즘에서, 여러줌은 클러스터 평균들과 거리 둘다를 업데이트하길 원할수 있수 있습니다. 간단한 방법은 다음과 같습니다:
+축차 알고리즘을 사용할 때 배열을 업데이트하는 일은 드물지 않다. 예를 들어 K-mean알고리즘에서, 클러스터 평균들과 거리 둘다를 업데이트하길 때가 있다. 간단한 방법은 다음과 같다:
 
     while !converged && t < maxiter
         means = compute_means(x, labels)
@@ -181,24 +181,24 @@ translator: [Jaesung Eom](https://twitter.com/JaesungEom)
 
 ## BLAS를 사용할 기회를 잡아라 (Identify opportunities to use BLAS)
 
-줄리아 Julia wraps a large number of [BLAS](http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms) routines for linear algebraic computation. These routines are the result of decades of research and optimization by many of the world's top experts in fast numerical computation. As a result, using them where possible can provide performance boosts that seem almost magical – BLAS routines are often orders of magnitude faster than the simple loop implementations they replace.
+줄리아는 선형대수 계산을 위해 다수의 [BLAS](http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms) 루틴을 래핑하고 있다. 이들 루틴들은 빠른 수치 계산에 관한 세계최고의 전문가들에 의해 수십년간 연구되고 최적화된 결과물이다. 그결과로 가능한 부분에 루팅을 사용하면 마법과도 같은 성능 향상을 보인다. – BLAS 루튼들은 종종 간단한 루프 구현보다 몇 차수 빠르다.
 
-For example, consider accumulating weighted versions of vectors as follows:
+예를 들어, 다음과 같은 벡터가중 구현을 보자:
 
     r = zeros(size(x,1))
     for j = 1:size(x,2)
         r += x[:,j] * w[j]
     end
 
-You can replace the statement `r += x[:,j] * w[j]` with a call to the BLAS `axpy!` function to get better performance:
+ `r += x[:,j] * w[j]` 부분을 BLAS 명령어 `axpy!` 함수로 바꾸면 나은 성능을 보인다:
 
     for j = 1:size(x,2)
         axpy!(w[j], x[:,j], r)
     end
 
-This, however, is still far from being optimal. If you are familiar with linear algebra, you may have probably found that this is just matrix-vector multiplication, and can be written as `r = x * w`, which is not only shorter, simpler and clearer than either of the above loops – it also runs much faster than either versions.
+이서도 여전히 최적은 아니다. 선형대수에 익숙하다면, 행렬-벡터곱셈을 찾을수 있고, `r = x * w` 로 쓸수 있으며, 짧고 간단하고 명확할뿐만 아니라 이전의 다른 두 버전 보다 훨씬 빠르게 실행된다.
 
-Our next example is a subtler application of BLAS routines to computing pairwise Euclidean distances between columns in two matrices. Below is a straightforward implementation that directly computes pairwise distances:
+다음 예제는 두 행렬에서 열사이의 쌍 유클리드 거리를 계산하는 BLAS 루틴의 미묘한 응용 프로그램이다. 직접적으로 쌍 거리를 계산하는 간단한 구현은 다음과 같다:
 
     m, n = size(a)
     r = Array(Float64, m, n)
@@ -207,7 +207,7 @@ Our next example is a subtler application of BLAS routines to computing pairwise
         r[i,j] = sqrt(sum(abs2(a[:,i] - b[:,j])))
     end
 
-This is clearly suboptimal – a lot of temporary arrays are created in evaluating the expression in the inner loop. To speed this up, we can devectorize the inner expression:
+분명 최적은 아니다. 많은 입시 배열이 내부 루프의 계산식 평가도중 만들어진다. 속도를 높이기 위해 내부 표현식을 디벡터라이제이션 해보자:
 
     d, m = size(a)
     n = size(b,2)
@@ -222,11 +222,11 @@ This is clearly suboptimal – a lot of temporary arrays are created in evaluati
         end
     end
 
-This version is much more performant than the vectorized form. But is it the best we can do? By employing an alternative strategy, we can write a even faster algorithm for computing pairwise distances. The trick is that the squared Euclidean distance between two vectors can be expanded as:
+이 버전은 벡터화된 형태보다 훨씬 효율이 좋다. 그러나 좀더 나아가보자. 다른 전략을 선택하면, 거리 쌍을 계산하는 좀 더 빠른 알고리즘을 작성할수 있다. 그 트릭은 바로 두 벡터사이의 유클리드 거리의 제곱을 다음과 같이 풀어 쓰는 것이다:
 
     sum(abs2(x-y)) == sum(abs2(x)) + sum(abs2(y)) - 2*dot(x,y)
 
-If we evaluate these three terms separately, the computation can be mapped to BLAS routines perfectly. Below, we have a new implementation of pairwise distances written using only BLAS routines, including the norm calls that are wrapped by the [*NumericExtensions.jl*](https://github.com/lindahua/NumericExtensions.jl) package:
+개별적으로 우변의 세가지 항을 계산한다면, BLAS 루틴에 완벽하게 호환된다. 아래, 놈(norm)을 래핑하는  [*NumericExtensions.jl*](https://github.com/lindahua/NumericExtensions.jl) 패키지를 사용하여 BLAS 루틴만으로 거리 쌍계산을 하는 구현을 보여준다 :
 
     using NumericExtensions   # for sqsum
     using Base.LinAlg.BLAS    # for gemm!
@@ -243,18 +243,19 @@ If we evaluate these three terms separately, the computation can be mapped to BL
         r[i] = sqrt(r[i])
     end
 
-This version is over *100 times* faster than our original implementation — the `gemm` function in BLAS has been optimized to the extreme by many talented developers and engineers over the past few decades. 
+개선 버전은  **100 배** 빠르다— BLAS `gemm` 함수는 지난 수십년간 여러 재능있는 엔지니어와 개발자들이 최적화 해왔다. 
 
-We should mention that you don't have to implement this yourself if you really want to compute pairwise distances: the [*Distance.jl*](https://github.com/lindahua/Distance.jl) package provides optimized implementations of a broad variety of distance metrics, including this one. We presented this optimization trick as an example to illustrate the substantial performance gains that can be achieved by writing code that uses BLAS routines wherever possible.
+여러분이 직접 이를 구현할 필요는 없다: [*Distance.jl*](https://github.com/lindahua/Distance.jl) 패키지가 이미 다양한, 이를 포함한 거리 메트릭 구현하고 있다. 여기서 보여주고자 한것은 가능한 모든 곳에서 BLAS 루틴을 사용함으로서 얻을수 있는 엄청난 성능 향상이다.
 
-## Explore available packages
+## 여러 패키지를 시도라하 (Explore available packages)
 
-Julia has a very active open source ecosystem. A variety of packages have been developed that provide optimized algorithms for high performance computation.
-Look for a package that does what you need before you decide to roll your own – and if you don't find what you need, consider contributing it!
-Here are a couple of packages that might be useful for those interested in high performance computation:
+줄리아는 활발한 오픈 소스 생태계를 가고 있다. 다양한 패키지가 고성능 계산에 최적화된 알고리즘을 제공하기 위해 계발 되어 왔다.
+직접 만들기로 마음먹기 전에 먼저 여러분의 요구를 충족하는 패키지 없나 찾아보고, 없으면 만들어서 기여할수 있다.
 
-* [NumericExtensions.jl](https://github.com/lindahua/NumericExtensions.jl) – extensions to Julia's base functionality for high-performance support for a variety of common computations (many of these will gradually get moved into base Julia).
+고성능 계산에 관심있는 이들을 위한 패키지는 다음과 같다:
 
-* [Devectorize.jl](https://github.com/lindahua/Devectorize.jl) – macros and functions to de-vectorize vector expressions. With this package, users can write computations in high-level vectorized way while enjoying the high run-time performance of hand-coded de-vectorized loops.
+* [NumericExtensions.jl](https://github.com/lindahua/NumericExtensions.jl) – 고성능 계산을 위한 줄리아의 기본 기능 확장 (추후에 기본 줄리아로 편입) 
 
-Check out the [Julia package list](http://docs.julialang.org/en/latest/packages/packagelist/) for many more packages. Julia also ships with a [sampling profiler](http://docs.julialang.org/en/latest/stdlib/profile/) to measure where your code is spending most of its time. When in doubt, measure don't guess!
+* [Devectorize.jl](https://github.com/lindahua/Devectorize.jl) – 디벡터라이제이션을 위한 함수와 매크로 패키지. 고수준의 벡터화된 표현식을 작성하면서, 디벡터라이제션을 맛볼수 있게 해준다.
+
+[Julia package list](http://docs.julialang.org/en/latest/packages/packagelist/) 에서 더 많은 패키지를 확인해보자. 줄리아는 또한  [sampling profiler](http://docs.julialang.org/en/latest/stdlib/profile/) 프로파일러를 제공하니, 여러분의 코드가 어느 곳에서 병목이 있는지 어림 짐작이 아니라 측정할 수 있다!
